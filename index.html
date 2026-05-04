@@ -161,7 +161,7 @@
 
   <script>
 
-    const API_KEY = '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';
+    
 
     const userInput   = document.getElementById('userInput');
     const terminalDiv = document.getElementById('terminal');
@@ -231,28 +231,35 @@
     }
 
     // ── CALL API ──
-    async function callBudy(retryCount = 0) {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + API_KEY
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-oss-20b:free',
-          messages: [{ role: 'system', content: window.VINNY_PROFILE || VINNY_PROFILE }, ...history]
-        })
-      });
+   async function callBudy(retryCount = 0) {
+  const res = await fetch('https://budy-ai.klt770586.workers.dev', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-oss-20b:free',
+      messages: [
+        { role: 'system', content: window.VINNY_PROFILE || VINNY_PROFILE },
+        ...history
+      ]
+    })
+  });
 
-      if (res.status === 429) {
-        if (retryCount >= 3) throw new Error('Too many retries!');
-        addLine('system', '[ Rate limit — retrying in ' + (retryCount + 1) * 5 + 's... ]');
-        await new Promise(r => setTimeout(r, (retryCount + 1) * 5000));
-        return callBudy(retryCount + 1);
-      }
+  if (res.status === 429) {
+    if (retryCount >= 3) throw new Error('Too many retries!');
 
-      return res;
-    }
+    addLine(
+      'system',
+      '[ Rate limit — retrying in ' + (retryCount + 1) * 5 + 's... ]'
+    );
+
+    await new Promise(r => setTimeout(r, (retryCount + 1) * 5000));
+    return callBudy(retryCount + 1);
+  }
+
+  return res;
+}
 
     // ── MAIN INPUT HANDLER ──
     userInput.addEventListener('keydown', async function(e) {

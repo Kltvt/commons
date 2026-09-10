@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Commons — a shared feed for ideas, blogs, and news</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #EDEAE1;
+    --paper-raised: #F5F3EC;
+    --ink: #22252A;
+    --ink-soft: #61645E;
+    --ink-faint: #8B8D86;
+    --line: #D9D4C6;
+    --teal: #2B6E6E;
+    --teal-deep: #1C4A4A;
+    --ochre: #A97A1F;
+    --ochre-deep: #7A5714;
+    --brick: #8C3B2E;
+    --brick-deep: #632A20;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  header.mast { border-bottom: 2px solid var(--ink); padding: 2rem 0 1.25rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+  .mast-word { font-family: 'Fraunces', serif; font-weight: 600; font-size: 2.75rem; letter-spacing: -0.01em; line-height: 1; margin: 0; }
+  .mast-tag { color: var(--ink-soft); font-size: 0.95rem; margin-top: 0.5rem; max-width: 32ch; }
+  .mast-date { color: var(--ink-faint); font-size: 0.8rem; }
+  .auth-box { text-align: right; font-size: 0.85rem; }
+  .auth-box button { background: none; border: 1px solid var(--line); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; font-size: 0.82rem; padding: 0.4rem 0.8rem; cursor: pointer; }
+  .auth-box button:hover { border-color: var(--ink-soft); }
+
+  nav.tabs { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--line); padding: 0.75rem 0; margin-bottom: 1.75rem; }
+  .tab { background: none; border: none; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.9rem; color: var(--ink-soft); cursor: pointer; padding: 0.25rem 0.1rem; border-bottom: 2px solid transparent; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 500; }
+
+  .composer { background: var(--paper-raised); border: 1px solid var(--line); padding: 1.1rem 1.25rem; margin-bottom: 2rem; }
+  .composer-prompt { background: none; border: none; text-align: left; width: 100%; font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink-soft); cursor: pointer; padding: 0.25rem 0; }
+  .type-pill { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; padding: 0.3rem 0.7rem; border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); cursor: pointer; }
+  .type-pill.on-idea { background: var(--teal); border-color: var(--teal); color: #EAF4F1; }
+  .type-pill.on-blog { background: var(--ochre); border-color: var(--ochre); color: #FBF2E1; }
+  .type-pill.on-news { background: var(--brick); border-color: var(--brick); color: #F7E9E5; }
+  .field { width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; padding: 0.6rem 0.7rem; font-size: 0.92rem; margin-bottom: 0.6rem; }
+  textarea.field { resize: vertical; min-height: 70px; }
+  .field:focus { outline: none; border-color: var(--ink-soft); }
+  .btn-primary { font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 0.85rem; background: var(--ink); color: var(--paper); border: none; padding: 0.55rem 1.1rem; cursor: pointer; }
+  .btn-primary:hover { background: var(--teal-deep); }
+  .btn-text { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.85rem; background: none; border: none; color: var(--ink-faint); cursor: pointer; }
+  .error-text { color: var(--brick-deep); font-size: 0.82rem; margin: -0.3rem 0 0.6rem; }
+
+  .feed-grid { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
+  @media (max-width: 780px) { .feed-grid { grid-template-columns: 1fr; } }
+
+  .avatar { width: 30px; height: 30px; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 500; color: #fff; border-radius: 50%; }
+
+  .idea { padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+  .idea-body { font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.5; margin: 0 0 0.4rem; }
+  .idea-meta { font-size: 0.78rem; color: var(--ink-faint); display: flex; gap: 0.9rem; align-items: center; }
+
+  .blog { padding: 1.6rem 0; border-bottom: 1px solid var(--line); }
+  .blog-tag { font-size: 0.72rem; color: var(--ochre-deep); margin-bottom: 0.3rem; }
+  .blog-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.55rem; line-height: 1.2; margin: 0 0 0.5rem; }
+  .blog-excerpt { color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; margin: 0 0 0.6rem; max-width: 62ch; }
+  .blog-meta { font-size: 0.8rem; color: var(--ink-faint); display: flex; align-items: center; gap: 0.6rem; }
+
+  .news-row { display: grid; grid-template-columns: 96px 1fr; gap: 1rem; padding: 0.85rem 0; border-top: 1px solid var(--line); }
+  .news-time { font-size: 0.72rem; color: var(--ink-faint); padding-top: 0.15rem; }
+  .news-tag { display: inline-block; font-size: 0.68rem; color: var(--brick-deep); border: 1px solid var(--brick); padding: 0.05rem 0.4rem; margin-bottom: 0.3rem; }
+  .news-headline { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.05rem; margin: 0 0 0.25rem; line-height: 1.3; }
+  .news-dek { color: var(--ink-soft); font-size: 0.88rem; margin: 0; }
+
+  .side-block { margin-bottom: 2rem; }
+  .side-head { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 600; margin: 0 0 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--ink); }
+  .side-note { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.6; }
+  .side-panel { background: var(--paper-raised); border: 1px solid var(--line); padding: 1.1rem 1.2rem; }
+  .empty, .loading { padding: 3rem 0; text-align: center; color: var(--ink-faint); font-size: 0.9rem; }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(34,37,42,0.5); display: none; align-items: center; justify-content: center; z-index: 10; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--paper); border: 1px solid var(--ink); padding: 1.6rem; width: 90%; max-width: 360px; }
+  .modal h2 { font-family: 'Fraunces', serif; font-size: 1.4rem; margin: 0 0 1rem; }
+  .modal-tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
+  .modal-tabs button { background: none; border: none; font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; padding-bottom: 0.3rem; border-bottom: 2px solid transparent; }
+  .modal-tabs button.active { color: var(--ink); border-bottom-color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="mast">
+      <div>
+        <p class="mast-date" id="today"></p>
+        <h1 class="mast-word">Commons</h1>
+        <p class="mast-tag">A shared feed for ideas, stories, and the news worth knowing about.</p>
+      </div>
+      <div class="auth-box" id="authBox"></div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <div class="feed-grid">
+      <div>
+        <div class="composer" id="composer"></div>
+        <div id="feed"></div>
+      </div>
+      <aside>
+        <div class="side-block">
+          <h3 class="side-head">Active threads</h3>
+          <div id="threads"></div>
+        </div>
+        <div class="side-block side-panel">
+          <h3 class="side-head" style="margin-top:0;">New here?</h3>
+          <p class="side-note">Commons works best when people share small things, not just finished ones. A half-formed idea is welcome here. Sign in to post a thought, a blog entry, or something newsworthy in your area.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal">
+      <div class="modal-tabs">
+        <button id="tabLogin" class="active">Sign in</button>
+        <button id="tabRegister">Create account</button>
+      </div>
+      <h2 id="modalTitle">Sign in</h2>
+      <div id="authError" class="error-text" style="display:none;"></div>
+      <input class="field" id="regName" placeholder="Your name" style="display:none;" />
+      <input class="field" id="authEmail" placeholder="Email" type="email" />
+      <input class="field" id="authPassword" placeholder="Password" type="password" />
+      <button class="btn-primary" id="authSubmit" style="width:100%;">Sign in</button>
+      <button class="btn-text" id="authCancel" style="width:100%; margin-top:0.5rem;">Cancel</button>
+    </div>
+  </div>
+
+<script>
+// Point this at your deployed API (see backend/README.md). Defaults to local dev.
+const API_BASE = window.COMMONS_API_BASE || "http://localhost:4000";
+
+const state = {
+  token: localStorage.getItem("commons_token") || null,
+  user: JSON.parse(localStorage.getItem("commons_user") || "null"),
+  filter: "all",
+  posts: [],
+  composerOpen: false,
+  postType: "idea",
+  authMode: "login",
+};
+
+const AVATAR_COLORS = ["#2B6E6E", "#A97A1F", "#8C3B2E"];
+function colorFor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+function initials(name) {
+  return (name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+}
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h";
+  return Math.floor(hrs / 24) + "d";
+}
+
+async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (state.token) headers.Authorization = "Bearer " + state.token;
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  const data = res.status === 204 ? null : await res.json().catch(() => null);
+  if (!res.ok) throw new Error((data && data.error) || "Something went wrong.");
+  return data;
+}
+
+function setAuth(token, user) {
+  state.token = token;
+  state.user = user;
+  if (token) {
+    localStorage.setItem("commons_token", token);
+    localStorage.setItem("commons_user", JSON.stringify(user));
+  } else {
+    localStorage.removeItem("commons_token");
+    localStorage.removeItem("commons_user");
+  }
+  renderAuthBox();
+  renderComposer();
+}
+
+function renderAuthBox() {
+  const el = document.getElementById("authBox");
+  if (state.user) {
+    el.innerHTML = `<span style="margin-right:0.75rem;">${state.user.name}</span><button id="logoutBtn">Sign out</button>`;
+    document.getElementById("logoutBtn").onclick = () => setAuth(null, null);
+  } else {
+    el.innerHTML = `<button id="signInBtn">Sign in</button>`;
+    document.getElementById("signInBtn").onclick = () => openAuthModal("login");
+  }
+}
+
+function openAuthModal(mode) {
+  state.authMode = mode;
+  document.getElementById("authModal").classList.add("open");
+  document.getElementById("authError").style.display = "none";
+  document.getElementById("regName").style.display = mode === "register" ? "block" : "none";
+  document.getElementById("modalTitle").textContent = mode === "register" ? "Create account" : "Sign in";
+  document.getElementById("authSubmit").textContent = mode === "register" ? "Create account" : "Sign in";
+  document.getElementById("tabLogin").classList.toggle("active", mode === "login");
+  document.getElementById("tabRegister").classList.toggle("active", mode === "register");
+}
+
+document.getElementById("tabLogin").onclick = () => openAuthModal("login");
+document.getElementById("tabRegister").onclick = () => openAuthModal("register");
+document.getElementById("authCancel").onclick = () => document.getElementById("authModal").classList.remove("open");
+
+document.getElementById("authSubmit").onclick = async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const name = document.getElementById("regName").value.trim();
+  const errEl = document.getElementById("authError");
+  errEl.style.display = "none";
+  try {
+    let data;
+    if (state.authMode === "register") {
+      data = await api("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email, password }) });
+    } else {
+      data = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    }
+    setAuth(data.token, data.user);
+    document.getElementById("authModal").classList.remove("open");
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  }
+};
+
+function renderTabs() {
+  const tabs = [["all", "Everything"], ["idea", "Ideas"], ["blog", "Blogs"], ["news", "News"]];
+  document.getElementById("tabs").innerHTML = tabs
+    .map(([key, label]) => `<button class="tab${state.filter === key ? " active" : ""}" data-filter="${key}">${label}</button>`)
+    .join("");
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.onclick = () => {
+      state.filter = btn.dataset.filter;
+      loadPosts();
+    };
+  });
+}
+
+const TYPE_META = {
+  idea: { label: "Idea", cls: "on-idea" },
+  blog: { label: "Blog post", cls: "on-blog" },
+  news: { label: "News", cls: "on-news" },
+};
+
+function renderComposer() {
+  const el = document.getElementById("composer");
+  if (!state.user) {
+    el.innerHTML = `<button class="composer-prompt" id="openAuthFromComposer">Sign in to share a thought, a post, or something worth knowing...</button>`;
+    document.getElementById("openAuthFromComposer").onclick = () => openAuthModal("login");
+    return;
+  }
+  if (!state.composerOpen) {
+    el.innerHTML = `<button class="composer-prompt" id="openComposer">Share a thought, a post, or something worth knowing...</button>`;
+    document.getElementById("openComposer").onclick = () => { state.composerOpen = true; renderComposer(); };
+    return;
+  }
+  const pills = Object.entries(TYPE_META)
+    .map(([key, meta]) => `<button class="type-pill${state.postType === key ? " " + meta.cls : ""}" data-type="${key}">${meta.label}</button>`)
+    .join("");
+  el.innerHTML = `
+    <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">${pills}</div>
+    ${state.postType !== "idea" ? `<input class="field" id="composerTitle" placeholder="${state.postType === "blog" ? "Give your post a title" : "Headline"}" />` : ""}
+    <textarea class="field" id="composerBody" placeholder="${state.postType === "idea" ? "What's on your mind?" : state.postType === "blog" ? "Write your post..." : "What happened?"}"></textarea>
+    <div id="composerError" class="error-text" style="display:none;"></div>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+      <button class="btn-primary" id="submitPost">Post to Commons</button>
+      <button class="btn-text" id="cancelPost">Cancel</button>
+    </div>`;
+  document.querySelectorAll(".type-pill").forEach((btn) => {
+    btn.onclick = () => { state.postType = btn.dataset.type; renderComposer(); };
+  });
+  document.getElementById("cancelPost").onclick = () => { state.composerOpen = false; renderComposer(); };
+  document.getElementById("submitPost").onclick = submitPost;
+}
+
+async function submitPost() {
+  const body = document.getElementById("composerBody").value.trim();
+  const titleEl = document.getElementById("composerTitle");
+  const title = titleEl ? titleEl.value.trim() : "";
+  const errEl = document.getElementById("composerError");
+  errEl.style.display = "none";
+  if (!body || (state.postType !== "idea" && !title)) {
+    errEl.textContent = state.postType === "idea" ? "Write something first." : "Add a title and some text.";
+    errEl.style.display = "block";
+    return;
+  }
+  try {
+    await api("/api/posts", { method: "POST", body: JSON.stringify({ type: state.postType, title, body }) });
+    state.composerOpen = false;
+    renderComposer();
+    loadPosts();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  }
+}
+
+function postHTML(post) {
+  const type = post.type.toLowerCase();
+  if (type === "idea") {
+    return `<article class="idea">
+      <p class="idea-body">${escapeHTML(post.body)}</p>
+      <div class="idea-meta">
+        <span class="avatar" style="background:${colorFor(post.author.name)}; width:22px; height:22px; font-size:0.62rem;">${initials(post.author.name)}</span>
+        <span>${escapeHTML(post.author.name)}</span>
+        <span>${timeAgo(post.createdAt)}</span>
+        <span>${post.replyCount} ${post.replyCount === 1 ? "reply" : "replies"}</span>
+      </div>
+    </article>`;
+  }
+  if (type === "blog") {
+    return `<article class="blog">
+      <p class="blog-tag">${escapeHTML(post.tag || "Community post")}</p>
+      <h2 class="blog-title">${escapeHTML(post.title || "")}</h2>
+      <p class="blog-excerpt">${escapeHTML(post.body)}</p>
+      <div class="blog-meta">
+        <span class="avatar" style="background:${colorFor(post.author.name)};">${initials(post.author.name)}</span>
+        <span>${escapeHTML(post.author.name)}, ${timeAgo(post.createdAt)}</span>
+      </div>
+    </article>`;
+  }
+  return `<div class="news-row">
+    <div class="news-time">${timeAgo(post.createdAt)}</div>
+    <div>
+      <span class="news-tag">${escapeHTML(post.tag || "Community")}</span>
+      <h3 class="news-headline">${escapeHTML(post.title || "")}</h3>
+      <p class="news-dek">${escapeHTML(post.body)}</p>
+    </div>
+  </div>`;
+}
+
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+
+async function loadPosts() {
+  renderTabs();
+  document.getElementById("feed").innerHTML = `<div class="loading">Loading the feed...</div>`;
+  try {
+    const query = state.filter === "all" ? "" : `?type=${state.filter}`;
+    const data = await api(`/api/posts${query}`);
+    state.posts = data.posts;
+    const feedEl = document.getElementById("feed");
+    feedEl.innerHTML = state.posts.length
+      ? state.posts.map(postHTML).join("")
+      : `<div class="empty">Nothing here yet. Be the first to share something.</div>`;
+    renderThreads();
+  } catch (e) {
+    document.getElementById("feed").innerHTML = `<div class="empty">Couldn't reach the API at ${API_BASE}. Is the backend running?</div>`;
+  }
+}
+
+function renderThreads() {
+  const ideas = state.posts
+    .filter((p) => p.type.toLowerCase() === "idea")
+    .slice()
+    .sort((a, b) => b.replyCount - a.replyCount)
+    .slice(0, 3);
+  document.getElementById("threads").innerHTML = ideas
+    .map(
+      (t) => `<div style="display:flex; gap:0.6rem; padding:0.65rem 0; border-bottom:1px solid var(--line);">
+        <span class="avatar" style="background:${colorFor(t.author.name)}; width:24px; height:24px; font-size:0.65rem;">${initials(t.author.name)}</span>
+        <div>
+          <p style="font-size:0.85rem; line-height:1.4; margin:0 0 0.2rem;">${escapeHTML(t.body)}</p>
+          <p style="font-size:0.72rem; color:var(--ink-faint); margin:0;">${t.replyCount} replies</p>
+        </div>
+      </div>`
+    )
+    .join("");
+}
+
+document.getElementById("today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+renderAuthBox();
+renderComposer();
+loadPosts();
+</script>
+</body>
+</html>

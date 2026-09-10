@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostType {
+  IDEA
+  BLOG
+  NEWS
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  bio       String?
+  createdAt DateTime @default(now())
+
+  posts   Post[]
+  replies Reply[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  type      PostType
+  title     String?
+  tag       String?
+  body      String
+  createdAt DateTime @default(now())
+
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  replies  Reply[]
+
+  @@index([type, createdAt])
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  @@index([postId])
+}
